@@ -170,7 +170,7 @@ if __name__ == '__main__':
         exit(1)
     
     program_data = ProgramData()
-    program_data.read_train_file_to_datasets(filename_data, lambda x : x, lambda x: labels_to_versor(x, 10))
+    program_data.read_train_file_to_datasets(filename_data, data_transformation_func=gray_to_bw, label_transformation_func=lambda x: labels_to_versor(x, 10))
     program_data.train.shuffle()
     program_data.move_part_of_trian_to_test(test_set_size)
 
