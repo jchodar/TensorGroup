@@ -9,3 +9,5 @@ filename_test = '/home/lukasz/digits/test.csv'
 filename_output = '/home/lukasz/digits//out/out.csv'
 visualization_prefix = '/home/lukasz/digits/img/'
 mnist_filepath = '/home/lukasz/digits/mnist/'
+
+dogs_filepath = '/home/lukasz/Downloads/train/'
