@@ -8,6 +8,7 @@ import numpy
 import pandas
 from PIL import Image
 import os
+from settings.filepaths import filename_data,filename_test, filename_output, visualization_prefix
 
 
 class Dataset(object):
@@ -161,10 +162,6 @@ if __name__ == '__main__':
     # Gradient Descent
     optimizer = tf.train.GradientDescentOptimizer(tr_rate).minimize(cost_function)
     
-    filename_data = 'C:/TMP/data/train.csv'
-    filename_test = 'C:/TMP/data/test.csv'
-    filename_output = 'C:/TMP/out/out.csv'
-    
     if not os.path.exists(filename_data):
         print('Data file not found')
         exit(1)
@@ -208,7 +205,7 @@ if __name__ == '__main__':
                 # Calculate accuracy
                 accuracy = tf.reduce_mean(tf.cast(predictions, "float"))
                 print('Accuracy:', accuracy.eval({x: program_data.test.get_data(), y: program_data.test.get_labels()}))
-                visualise(W.eval(), 'C:/TMP/img/' + str(iteration) + '/')
+                visualise(W.eval(), visualization_prefix + str(iteration) + '/')
     
         print('Tuning completed!')
     
