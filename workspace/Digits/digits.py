@@ -7,12 +7,13 @@ Project: https://github.com/aymericdamien/TensorFlow-Examples/
 '''
 
 from __future__ import print_function
+from settings.filepaths import mnist_filepath
 
 import tensorflow as tf
 
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("C:/Users/lab/Downloads/", one_hot=True)
+mnist = input_data.read_data_sets(mnist_filepath, one_hot=True)
 
 # Parameters
 learning_rate = 0.001
