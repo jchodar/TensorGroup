@@ -10,9 +10,11 @@ from __future__ import print_function
 
 import tensorflow as tf
 
+dataPath = "C:/tensorData/data/"
+
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("C:/Users/lab/Downloads/", one_hot=True)
+mnist = input_data.read_data_sets(dataPath, one_hot=True)
 
 # Parameters
 learning_rate = 0.001
