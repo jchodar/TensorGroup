@@ -15,11 +15,9 @@ dataPath = "C:/tensorData/data/"
 
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
-<<<<<<< HEAD
-mnist = input_data.read_data_sets(dataPath, one_hot=True)
-=======
+
+#mnist = input_data.read_data_sets(dataPath, one_hot=True)
 mnist = input_data.read_data_sets(mnist_filepath, one_hot=True)
->>>>>>> 59960d826f6fb2d829f79a52a2e4272a6264d806
 
 # Parameters
 learning_rate = 0.001
