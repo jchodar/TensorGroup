@@ -26,6 +26,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Digits\digits.py" />
+    <Compile Include="Digits\dogcat\dogcat.py" />
+    <Compile Include="Digits\dogcat\__init__.py" />
     <Compile Include="Digits\runner.py" />
     <Compile Include="Digits\settings\filepaths.py" />
     <Compile Include="Digits\settings\__init__.py" />
@@ -36,6 +38,7 @@
     <Folder Include=".metadata\.plugins\org.python.pydev\" />
     <Folder Include=".metadata\.plugins\org.python.pydev\pyunit_tests" />
     <Folder Include="Digits" />
+    <Folder Include="Digits\dogcat\" />
     <Folder Include="Digits\settings" />
   </ItemGroup>
   <ItemGroup>
