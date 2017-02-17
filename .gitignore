@@ -90,3 +90,4 @@ ENV/
 .metadata
 *.suo
 /workspace/workspace.pyproj.user
+/workspace/.vs/workspace/v14/*.suo
