@@ -148,6 +148,8 @@ if __name__ == '__main__':
     batch_size = 128
     display_step = 10
     color_channels = 3
+    regularization_constant = 0.001  # Choose an appropriate one.
+    
     # Network Parameters
     n_input = size*size*color_channels # data input (img shape: size x size)
     n_classes = 2 # total classes (cat or dog)
@@ -186,6 +188,10 @@ if __name__ == '__main__':
     
     # Define loss and optimizer
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
+    
+    regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
+    #cost = cost + regularization_constant * sum(regularization_losses)
+    
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
     
     # Evaluate model
