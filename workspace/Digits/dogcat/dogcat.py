@@ -3,11 +3,12 @@ Created on Jan 14, 2017
 
 @author: lukasz
 '''
-from test.support import TEST_DATA_DIR
+#from test.support import TEST_DATA_DIR
+from numpy import float32
 
 
 #from settings import filepaths as fp
-dogs_filepath = '/home/lukasz/Downloads/train/'
+dogs_filepath = 'C:/Users/lab/Downloads/train/train/'
 
 from PIL import Image as im
 import numpy as np
@@ -19,12 +20,12 @@ import tensorflow as tf
 def read_jpg(filepath, weight, height, name):
     image = im.open(filepath)
     image = ri.resize_contain(image, [weight,height])
-    image=image.convert('L')
-    image.save('/home/lukasz/Downloads/tmp/'+name)
+    image=image.convert('RGB')
+    #image.save('/home/lukasz/Downloads/tmp/'+name)
     image = np.array(image)
     return image
 
-def read_all_jpgs(dir_path, weight, height, proportion_to_read_in, test_ratio):
+def read_all_jpgs(dir_path, weight, height, proportion_to_read_in=1, test_ratio=0.2):
     train_data = []
     train_labels = []
     test_data = []
@@ -42,7 +43,6 @@ def read_all_jpgs(dir_path, weight, height, proportion_to_read_in, test_ratio):
                 test_labels.append(1 if 'cat' in filename else 0)
                 test_data.append(read_jpg(dir_path+filename, weight, height, filename))
             if i%1000 == 0:
-                break
                 print(i)
     return np.array(train_data), np.array(train_labels), np.array(test_data), np.array(test_labels)
 
@@ -90,11 +90,12 @@ def maxpool2d(x, k=2):
 
 
 # Create model
-def conv_net(x, weights, biases, dropout, size):
+def conv_net(x, weights, biases, dropout, size, color_channels=1):
     # Reshape input picture
-    color_channels = 1
     x = tf.reshape(x, shape=[-1, size, size, color_channels])
     print('after reshape',x.get_shape())
+    blur_matrix = np.random.randint(5, size=(size, size, color_channels)).astype(float32)
+    x = tf.scan(lambda a, b: tf.add(b, blur_matrix), x)
     
     # Convolution Layer
     conv1 = conv2d(x, weights['wc1'], biases['bc1'])
@@ -108,7 +109,7 @@ def conv_net(x, weights, biases, dropout, size):
     print('conv2',x.get_shape())
     # Max Pooling (down-sampling)
     conv2 = maxpool2d(conv2, k=2)
-    print('conv2 after conv2d',x.get_shape())
+    print('conv2 after conv2d', x.get_shape())
 
     # Fully connected layer
     # Reshape conv2 output to fit fully connected layer input
@@ -124,7 +125,7 @@ def conv_net(x, weights, biases, dropout, size):
 
 if __name__ == '__main__':
     size = 64 #80 #64
-    pets = read_all_jpgs(dogs_filepath, size, size, 1, 0.2)
+    pets = read_all_jpgs(dogs_filepath, size, size, proportion_to_read_in=0.2, test_ratio=0.05)
     # pets[0] - imgs
     # pets[1] - labels
     train_data = pets[0]
@@ -143,12 +144,12 @@ if __name__ == '__main__':
     
     # Parameters
     learning_rate = 0.005
-    training_iters = 10000
+    training_iters = 20000
     batch_size = 128
     display_step = 10
-    
+    color_channels = 3
     # Network Parameters
-    n_input = size*size # data input (img shape: size x size)
+    n_input = size*size*color_channels # data input (img shape: size x size)
     n_classes = 2 # total classes (cat or dog)
     dropout = 0.75 # Dropout, probability to keep units
     
@@ -162,7 +163,7 @@ if __name__ == '__main__':
     # Store layers weight & bias
     weights = {
         # 5x5 conv, 1 input, 32 outputs
-        'wc1': tf.Variable(tf.random_normal([filter_size, filter_size, 1, 32])),
+        'wc1': tf.Variable(tf.random_normal([filter_size, filter_size, 3, 32])),
         # 5x5 conv, 32 inputs, 64 outputs
         'wc2': tf.Variable(tf.random_normal([filter_size, filter_size, 32, 64])),
         # fully connected, 7*7*64 inputs, 1024 outputs
@@ -181,7 +182,7 @@ if __name__ == '__main__':
         
         
         # Construct model
-    pred = conv_net(x, weights, biases, keep_prob, size)
+    pred = conv_net(x, weights, biases, keep_prob, size, color_channels)
     
     # Define loss and optimizer
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(pred, y))
