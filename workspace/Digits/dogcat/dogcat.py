@@ -3,11 +3,10 @@ Created on Jan 14, 2017
 
 @author: lukasz
 '''
-from test.support import TEST_DATA_DIR
 
 
-#from settings import filepaths as fp
-dogs_filepath = '/home/lukasz/Downloads/train/'
+from settings import filepaths as fp
+dogs_filepath =  fp.basepath + 'dogcat/train/'
 
 from PIL import Image as im
 import numpy as np
@@ -20,7 +19,7 @@ def read_jpg(filepath, weight, height, name):
     image = im.open(filepath)
     image = ri.resize_contain(image, [weight,height])
     image=image.convert('L')
-    image.save('/home/lukasz/Downloads/tmp/'+name)
+    image.save(fp.basepath+'/tmp/dogcat/'+name)
     image = np.array(image)
     return image
 
@@ -30,7 +29,10 @@ def read_all_jpgs(dir_path, weight, height, proportion_to_read_in, test_ratio):
     test_data = []
     test_labels = []
     i = 1
-    for filename in os.listdir(dir_path):
+    allDataFiles = os.listdir(dir_path)
+    fileCount = len(allDataFiles)
+    print("Processing ",fileCount," image files.");
+    for filename in allDataFiles:
         rand = random.random()
         if rand > 1-proportion_to_read_in :
             i+=1
@@ -41,9 +43,8 @@ def read_all_jpgs(dir_path, weight, height, proportion_to_read_in, test_ratio):
             else:
                 test_labels.append(1 if 'cat' in filename else 0)
                 test_data.append(read_jpg(dir_path+filename, weight, height, filename))
-            if i%1000 == 0:
-                break
-                print(i)
+            if i%100 == 0:
+                print("processed: ",i,"/",fileCount)
     return np.array(train_data), np.array(train_labels), np.array(test_data), np.array(test_labels)
 
 def np_array_to_vector(A):
