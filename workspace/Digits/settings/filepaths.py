@@ -4,7 +4,7 @@ Created on Jan 14, 2017
 @author: lukasz
 '''
 
-basepath = 'D:/TensorData/'
+basepath = 'D:/ProjectTensor/TensorData/'
 
 filename_data = basepath+'digits/train.csv'
 filename_test = basepath+'digits/test.csv'

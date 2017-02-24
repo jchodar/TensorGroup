@@ -16,14 +16,36 @@ import os
 from resizeimage import resizeimage as ri
 import random as random
 import tensorflow as tf
+import sys
+import time
+import functools
 
 def read_jpg(filepath, weight, height, name):
     image = im.open(filepath)
     image = ri.resize_contain(image, [weight,height])
-    image=image.convert('RGB')
+    image = image.convert('RGB')
     #image.save(fp.basepath+'/tmp/dogcat/'+name)
     image = np.array(image)
     return image
+
+def marksAt (n, max, marksCnt):
+    return int((n+1) * marksCnt / max)
+
+def needsNewMark(i, max, marksCnt):
+    return marksAt(i, max, marksCnt) > marksAt(i-1, max, marksCnt)
+
+def updateProgressBar(i, max, marksCnt, mark = 'o'):
+    if needsNewMark(i, max, marksCnt):
+        print(mark, end = '')
+    if i+1 == max:
+        print()
+
+def drawProgressBar(i, max, marksCnt, mark = 'o'):
+    for j in range(marksAt(i, max, marksCnt)):
+        print(mark, end = '')
+    if i+1 == max:
+        print()
+    
 
 def read_all_jpgs(dir_path, weight, height, proportion_to_read_in=1, test_ratio=0.2):
     train_data = []
@@ -33,20 +55,29 @@ def read_all_jpgs(dir_path, weight, height, proportion_to_read_in=1, test_ratio=
     i = 1
     allDataFiles = os.listdir(dir_path)
     fileCount = len(allDataFiles)
-    print("Processing ",fileCount," image files.");
-    for filename in allDataFiles:
-        rand = random.random()
-        if rand > 1-proportion_to_read_in :
-            i+=1
-            rand_test_train = random.random()
-            if rand_test_train > test_ratio:
-                train_labels.append(1 if 'cat' in filename else 0)
-                train_data.append(read_jpg(dir_path+filename, weight, height, filename))
-            else:
-                test_labels.append(1 if 'cat' in filename else 0)
-                test_data.append(read_jpg(dir_path+filename, weight, height, filename))
-            if i%100 == 0:
-                print("processed: ",i,"/",fileCount)
+    filesToReadCnt = int(fileCount*proportion_to_read_in)
+    filesInTestCnt = int(filesToReadCnt*test_ratio)
+    filesInTrainCnt = filesToReadCnt-filesInTestCnt 
+    print("Found",fileCount,"image files. Will read", filesToReadCnt, "(train",filesInTrainCnt,",test",filesInTestCnt,")")
+    random.shuffle(allDataFiles)
+    filesToRead = allDataFiles[:filesToReadCnt]
+    filesInTest = filesToRead[:filesInTestCnt]
+    filesInTrain = filesToRead[filesInTestCnt:]
+
+    print("Reading test ",filesInTestCnt," => \t", end = "")
+    for idx, filename in enumerate(filesInTest):
+        train_labels.append(1 if 'cat' in filename else 0)
+        train_data.append(read_jpg(dir_path+filename, weight, height, filename))
+        updateProgressBar(idx, filesInTestCnt, 20)
+    print("Cats in test :",functools.reduce(lambda a,x: a+1 if 'cat' in x else a, filesInTest, 0), "/", filesInTestCnt);
+
+    print("Reading train",filesInTrainCnt," => \t", end = "")
+    for idx, filename in enumerate(filesInTrain):
+        test_labels.append(1 if 'cat' in filename else 0)
+        test_data.append(read_jpg(dir_path+filename, weight, height, filename))
+        updateProgressBar(idx, filesInTrainCnt, 20)
+    print("Cats in train :",functools.reduce(lambda a,x: a+1 if 'cat' in x else a, filesInTrain, 0), "/", filesInTrainCnt);
+
     return np.array(train_data), np.array(train_labels), np.array(test_data), np.array(test_labels)
 
 def np_array_to_vector(A):
@@ -128,19 +159,19 @@ def conv_net(x, weights, biases, dropout, size, color_channels=1):
 
 if __name__ == '__main__':
     size = 64 #80 #64
-    pets = read_all_jpgs(dogs_filepath, size, size, proportion_to_read_in=0.2, test_ratio=0.05)
+    pets = read_all_jpgs(dogs_filepath, size, size, proportion_to_read_in=0.1, test_ratio=0.2)
     # pets[0] - imgs
     # pets[1] - labels
-    train_data = pets[0]
+    train_data   = pets[0]
     train_labels = pets[1]
-    test_data = pets[2]
-    test_labels = pets[3]
+    test_data    = pets[2]
+    test_labels  = pets[3]
     
     # reshape to vector
-    train_data = np_array_to_vector(train_data)
-    test_data = np_array_to_vector(test_data)
+    train_data   = np_array_to_vector(train_data)
+    test_data    = np_array_to_vector(test_data)
     train_labels = labels_to_versor(train_labels, 2)
-    test_labels = labels_to_versor(test_labels, 2)
+    test_labels  = labels_to_versor(test_labels, 2)
     
     #train_data_shuffled, train_labels_shuffled = shuffle_in_unison(train_data, train_labels)
     #test_data_shuffled, test_labels_shuffled = shuffle_in_unison(test_data, test_labels)
@@ -185,8 +216,7 @@ if __name__ == '__main__':
         'out': tf.Variable(tf.random_normal([n_classes]))
     }
         
-        
-        # Construct model
+    # Construct model
     pred = conv_net(x, weights, biases, keep_prob, size, color_channels)
     
     # Define loss and optimizer
@@ -208,8 +238,12 @@ if __name__ == '__main__':
     with tf.Session() as sess:
         sess.run(init)
         step = 1
+
+        print("Progress => " , end= "")
+        drawProgressBar(step*batch_size, training_iters, 40)
         # Keep training until reach max iterations
         while step * batch_size < training_iters:
+
             batch_x, batch_y = select_random_batch(train_data, train_labels, batch_size)
             # Run optimization op (backprop)
             sess.run(optimizer, feed_dict={x: batch_x, y: batch_y,
@@ -219,14 +253,17 @@ if __name__ == '__main__':
                 loss, acc = sess.run([cost, accuracy], feed_dict={x: batch_x,
                                                                   y: batch_y,
                                                                   keep_prob: 1.})
-                print("Iter " + str(step*batch_size) + ", Minibatch Loss= " + \
-                      "{:.6f}".format(loss) + ", Training Accuracy= " + \
-                      "{:.5f}".format(acc))
+                print("\n","Iter \t", str(step*batch_size), "[",int(step*batch_size*100/training_iters),"%]",
+                      " Minibatch Loss = {:.6f}".format(loss),
+                      ", Training Accuracy = {:.5f}".format(acc))
+
+                print("Progress => " , end= "")
+                drawProgressBar(step*batch_size, training_iters, 40)
+            else :
+                updateProgressBar(step*batch_size, training_iters, 40)
             step += 1
-        print("Optimization Finished!")
+        print("\n","Optimization Finished!")
     
         # Calculate accuracy for 256 mnist test images
         print("Testing Accuracy:", \
-            sess.run(accuracy, feed_dict={x: test_data,
-                                          y: test_labels,
-    keep_prob: 1.}))
+            sess.run(accuracy, feed_dict={x: test_data, y: test_labels,keep_prob: 1.}))
